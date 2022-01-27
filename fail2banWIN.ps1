@@ -1,13 +1,17 @@
-#Credit https://serverfault.com/questions/233222/ban-ip-address-based-on-x-number-of-unsuccessful-login-attempts
-#kevinmicke orginial code
-#Modifed old line 13 to fix log issue-- 
-#($arr_new_bad_ips_all = (get-winevent -filterhashtable @{ logname='Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Operational'; starttime=$dat_time_window; id=140 }).message)
-#Fixed 1/7/21
-#Added auto create a folder called security
-#Added whitelist private IP var - MUST BE CONFIGURED TO YOUR SUBNET ON NETWORK
-
-#todo - add in APT threat detection:
-#Get-EventLog -LogName 'Security' -InstanceId 4698 | Select-Object -Property * | Out-String -Stream | Select-String -pattern "Task Name", "<Hidden>", "<Command>", "<Arguments>"
+<#
+.SYNOPSIS
+Fail2banWin Powershell Script
+.DESCRIPTION
+The script will quickly scan over Windows event viewer logs for failed login attempts through RDP. It will automatically add malicious IPs to a firewall blacklist to prevent future login attempts.
+The script will search through the following event viewer logs:
+(Audit Login "Failures enabled") Audit event 4625
+PS> . .\fail2banWIN.ps1
+Run the script with default settings, it will automatically add Firewall rules
+.NOTES
+.Author: kevinmicke
+https://serverfault.com/questions/233222/ban-ip-address-based-on-x-number-of-unsuccessful-login-attempts
+.Modified by James to work on Windows server
+#>
 
 $current_date_utc = (Get-Date).ToUniversalTime()
 
@@ -18,6 +22,9 @@ $int_block_limit = 4
 $int_time_windowtocheck = -1
 
 # Set if private addresses should be added into blacklist or not
+# Modify lines 59-60 to add your local subnet range to whitelist
+#  !($_.StartsWith('192.168.') -and $whilelist_private_ips) -and
+#  !($_.StartsWith('0.0.') -and $whilelist_private_ips)
 $whilelist_private_ips = $true
 
 # Time window during which to check the Security log, which is currently set to check only the last 24 hours
